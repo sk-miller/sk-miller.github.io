@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ENGO551 Lab 5</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link href="https://unpkg.com/leaflet/dist/leaflet.css" rel="stylesheet">
+</head>
+<body>
+    <input type="text" id="host" placeholder="Host">
+    <input type="text" id="port" placeholder="Port">
+    <button id="start">Start</button>
+    <button id="end">End</button>
+    <button id="share">Share My Status</button>
+    <div id="mapid" style="height: 480px;"></div>
+
+    <script>
+        var client;
+        var map = L.map('mapid').setView([51.0447, -114.0719], 13); // Set initial view to Calgary
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        document.getElementById("start").onclick = function() {
+            var host = document.getElementById("host").value;
+            var port = document.getElementById("port").value;
+            // Connect to MQTT broker
+            client = new Paho.MQTT.Client(host, Number(port), "clientId");
+            client.onConnectionLost = onConnectionLost;
+            client.onMessageArrived = onMessageArrived;
+            client.connect({onSuccess:onConnect});
+        }
+
+        document.getElementById("end").onclick = function() {
+            // Disconnect from MQTT broker
+            if(client) {
+                client.disconnect();
+            }
+        }
+
+        document.getElementById("share").onclick = function() {
+            // Share location status
+            if(navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var latitude  = position.coords.latitude;
+                    var longitude = position.coords.longitude;
+                    var temperature = Math.random() * 100 - 50; // Generate a random temperature between -50 and 50
+                    var message = new Paho.MQTT.Message(JSON.stringify({lat: latitude, lon: longitude, temperature: temperature}));
+                    message.destinationName = "ENGO551/Shannon/my_temperature";
+                    client.send(message);
+                });
+            } else {
+                console.log("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function onConnect() {
+            console.log("Connected");
+            client.subscribe("ENGO551/Shannon/my_temperature");
+        }
+
+        function onConnectionLost(responseObject) {
+            if (responseObject.errorCode !== 0) {
+                console.log("Connection Lost: "+responseObject.errorMessage);
+                // Reconnect
+                client.connect({onSuccess:onConnect});
+            }
+        }
+
+        function onMessageArrived(message) {
+            console.log("Message Arrived: "+message.payloadString);
+            var payload = JSON.parse(message.payloadString);
+            var marker = L.marker([payload.lat, payload.lon]).addTo(map)
+                .bindPopup("Temperature: " + payload.temperature)
+                .openPopup();
+            if(payload.temperature < -40) {
+                marker.setIcon(L.icon({iconUrl: 'https://www.freeiconspng.com/uploads/blue-circle-icon-18.png'}));
+            } else if(payload.temperature < 10) {
+                marker.setIcon(L.icon({iconUrl: 'https://openclipart.org/image/2400px/svg_to_png/26193/Button-Green.png'}));
+            } else {
+                marker.setIcon(L.icon({iconUrl: 'https://www.freeiconspng.com/uploads/red-circle-icon-1.png'}));
+            }
+        }
+    </script>
+</body>
+</html>
