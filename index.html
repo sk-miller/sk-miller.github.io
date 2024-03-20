@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>ENGO551 Lab 5</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"
+        type="text/javascript"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <link href="https://unpkg.com/leaflet/dist/leaflet.css" rel="stylesheet">
 </head>
+
 <body>
     <input type="text" id="host" placeholder="Host">
     <input type="text" id="port" placeholder="Port">
     <button id="start">Start</button>
     <button id="end">End</button>
     <button id="share">Share My Status</button>
+    <button id="find-me">Show my location</button><br />
+    <p id="status"></p>
+    <a id="map-link" target="_blank"></a>
+
     <div id="mapid" style="height: 480px;"></div>
 
     <script>
@@ -21,31 +28,31 @@
             maxZoom: 19,
         }).addTo(map);
 
-        document.getElementById("start").onclick = function() {
+        document.getElementById("start").onclick = function () {
             var host = document.getElementById("host").value;
             var port = document.getElementById("port").value;
             // Connect to MQTT broker
             client = new Paho.MQTT.Client(host, Number(port), "clientId");
             client.onConnectionLost = onConnectionLost;
             client.onMessageArrived = onMessageArrived;
-            client.connect({onSuccess:onConnect});
+            client.connect({ onSuccess: onConnect });
         }
 
-        document.getElementById("end").onclick = function() {
+        document.getElementById("end").onclick = function () {
             // Disconnect from MQTT broker
-            if(client) {
+            if (client) {
                 client.disconnect();
             }
         }
 
-        document.getElementById("share").onclick = function() {
+        document.getElementById("share").onclick = function () {
             // Share location status
-            if(navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    var latitude  = position.coords.latitude;
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    var latitude = position.coords.latitude;
                     var longitude = position.coords.longitude;
                     var temperature = Math.random() * 100 - 50; // Generate a random temperature between -50 and 50
-                    var message = new Paho.MQTT.Message(JSON.stringify({lat: latitude, lon: longitude, temperature: temperature}));
+                    var message = new Paho.MQTT.Message(JSON.stringify({ lat: latitude, lon: longitude, temperature: temperature }));
                     message.destinationName = "ENGO551/Shannon/my_temperature";
                     client.send(message);
                 });
@@ -61,26 +68,59 @@
 
         function onConnectionLost(responseObject) {
             if (responseObject.errorCode !== 0) {
-                console.log("Connection Lost: "+responseObject.errorMessage);
+                console.log("Connection Lost: " + responseObject.errorMessage);
                 // Reconnect
-                client.connect({onSuccess:onConnect});
+                client.connect({ onSuccess: onConnect });
             }
         }
 
         function onMessageArrived(message) {
-            console.log("Message Arrived: "+message.payloadString);
+            console.log("Message Arrived: " + message.payloadString);
             var payload = JSON.parse(message.payloadString);
             var marker = L.marker([payload.lat, payload.lon]).addTo(map)
                 .bindPopup("Temperature: " + payload.temperature)
                 .openPopup();
-            if(payload.temperature < -40) {
-                marker.setIcon(L.icon({iconUrl: 'https://www.freeiconspng.com/uploads/blue-circle-icon-18.png'}));
-            } else if(payload.temperature < 10) {
-                marker.setIcon(L.icon({iconUrl: 'https://openclipart.org/image/2400px/svg_to_png/26193/Button-Green.png'}));
+            if (payload.temperature < -40) {
+                marker.setIcon(L.icon({ iconUrl: 'https://www.freeiconspng.com/uploads/blue-circle-icon-18.png' }));
+            } else if (payload.temperature < 10) {
+                marker.setIcon(L.icon({ iconUrl: 'https://openclipart.org/image/2400px/svg_to_png/26193/Button-Green.png' }));
             } else {
-                marker.setIcon(L.icon({iconUrl: 'https://www.freeiconspng.com/uploads/red-circle-icon-1.png'}));
+                marker.setIcon(L.icon({ iconUrl: 'https://www.freeiconspng.com/uploads/red-circle-icon-1.png' }));
             }
         }
+
+
+        function geoFindMe() {
+            const status = document.querySelector("#status");
+            const mapLink = document.querySelector("#map-link");
+
+            mapLink.href = "";
+            mapLink.textContent = "";
+
+            function success(position) {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                status.textContent = "";
+                mapLink.href = `https://www.openstreetmap.org/#map=18/${latitude}/${longitude}`;
+                mapLink.textContent = `Latitude: ${latitude} °, Longitude: ${longitude} °`;
+            }
+
+            function error() {
+                status.textContent = "Unable to retrieve your location";
+            }
+
+            if (!navigator.geolocation) {
+                status.textContent = "Geolocation is not supported by your browser";
+            } else {
+                status.textContent = "Locating…";
+                navigator.geolocation.getCurrentPosition(success, error);
+            }
+        }
+
+        document.querySelector("#find-me").addEventListener("click", geoFindMe);
+
     </script>
 </body>
+
 </html>
