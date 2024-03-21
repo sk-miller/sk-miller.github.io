@@ -41,7 +41,7 @@
             // Connect to MQTT broker
             const client = new Paho.MQTT.Client("wss://test.mosquitto.org:8081/mqtt", "mqttx_00c04b1e");
 
-            //client.onConnectionLost = onConnectionLost;
+            client.onConnectionLost = onConnectionLost;
             client.onMessageArrived = onMessageArrived;
             client.connect({ onSuccess: onConnect });
         }
@@ -82,7 +82,7 @@
             if (responseObject.errorCode !== 0) {
                 console.log("Connection Lost: " + responseObject.errorMessage);
                 // Reconnect
-                client.connect({ onSuccess: onConnect });
+                //client.connect({ onSuccess: onConnect });
             }
         }
 
