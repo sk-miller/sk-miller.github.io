@@ -33,8 +33,7 @@
             var host = document.getElementById("host").value;
             var port = document.getElementById("port").value;
             // Connect to MQTT broker
-            var host ="test.mosquitto.org";
-            var port =8080;
+            
             client = new Paho.MQTT.Client( host, port, "clientjs");
             client.onConnectionLost = onConnectionLost;
             client.onMessageArrived = onMessageArrived;
