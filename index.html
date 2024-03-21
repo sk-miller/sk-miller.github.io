@@ -16,7 +16,10 @@
     <button id="start">Start</button>
     <button id="end">End</button>
     <button id="share">Share My Status</button>
-    <button id="find-me">Show my location</button><br />
+    <input type="text" id="topic" placeholder="Topic">
+    <input type="text" id="message" placeholder="Message">
+    <button id="send">Send Message</button>
+    
     <p id="status"></p>
     <a id="map-link" target="_blank"></a>
 
@@ -33,21 +36,14 @@
             var host = document.getElementById("host").value;
             var port = document.getElementById("port").value;
 
-            // Ensure the port is an integer
-            
             // Create a new MQTT client
             client = new Paho.MQTT.Client(`wss://${host}:${port}/mqtt`, "mqttx_00c04b1e");
             console.log(`wss://${host}:${port}/mqtt`)
             // Connect to MQTT broker
-            //client = new Paho.MQTT.Client("wss://test.mosquitto.org:8081/mqtt", "mqttx_00c04b1e");
-
             client.onConnectionLost = onConnectionLost;
             client.onMessageArrived = onMessageArrived;
             client.connect({ onSuccess: onConnect });
         }
-
-
-
 
         document.getElementById("end").onclick = function () {
             // Disconnect from MQTT broker
@@ -64,7 +60,6 @@
                     var latitude = position.coords.latitude;
                     var longitude = position.coords.longitude;
                     var temperature = (Math.random() * 100 - 50).toFixed(1);
- // Generate a random temperature between -50 and 50
                     var message = new Paho.MQTT.Message(JSON.stringify({ lat: latitude, lon: longitude, temperature: temperature }));
                     message.destinationName = "ENGO551/Shannon/my_temperature";
                     client.send(message);
@@ -72,6 +67,15 @@
             } else {
                 console.log("Geolocation is not supported by this browser.");
             }
+        }
+
+        document.getElementById("send").onclick = function () {
+            // Send custom message
+            var topic = document.getElementById("topic").value;
+            var messageContent = document.getElementById("message").value;
+            var message = new Paho.MQTT.Message(messageContent);
+            message.destinationName = topic;
+            client.send(message);
         }
 
         function onConnect() {
@@ -101,10 +105,6 @@
                 marker.setIcon(L.icon({ iconUrl: 'https://www.freeiconspng.com/uploads/red-circle-icon-1.png' }));
             }
         }
-
-
-        
-
     </script>
 </body>
 
