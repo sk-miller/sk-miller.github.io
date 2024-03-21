@@ -32,15 +32,22 @@
         document.getElementById("start").onclick = function () {
             var host = document.getElementById("host").value;
             var port = document.getElementById("port").value;
+
+            // Ensure the port is an integer
+            port = parseInt(port, 10);
+
+            // Create a new MQTT client
+            const client = new Paho.MQTT.Client(`wss://${host}:${port}/mqtt`, "mqttx_6efa1a66");
+
             // Connect to MQTT broker
-            
-            client = new Paho.MQTT.Client( "wss://test.mosquitto.org:8081/mqtt", "mqttx_6efa1a66");
+
+
             client.onConnectionLost = onConnectionLost;
             client.onMessageArrived = onMessageArrived;
             client.connect({ onSuccess: onConnect });
         }
 
-       
+
 
 
         document.getElementById("end").onclick = function () {
