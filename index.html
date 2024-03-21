@@ -50,6 +50,7 @@
             if (client) {
                 client.disconnect();
                 console.log("Disconnected");
+                alert("Disconnected");
             }
         }
 
@@ -63,6 +64,7 @@
                     var message = new Paho.MQTT.Message(JSON.stringify({ lat: latitude, lon: longitude, temperature: temperature }));
                     message.destinationName = "ENGO551/Shannon/my_temperature";
                     client.send(message);
+                    alert("Status Sent");
                 });
             } else {
                 console.log("Geolocation is not supported by this browser.");
@@ -76,16 +78,19 @@
             var message = new Paho.MQTT.Message(messageContent);
             message.destinationName = topic;
             client.send(message);
+            alert("Message Sent");
         }
 
         function onConnect() {
             console.log("Connected");
+            alert("Connected");
             client.subscribe("ENGO551/Shannon/my_temperature");
         }
 
         function onConnectionLost(responseObject) {
             if (responseObject.errorCode !== 0) {
                 console.log("Connection Lost: " + responseObject.errorMessage);
+                alert("Connection Lost: " + responseObject.errorMessage);
                 // Reconnect
                 client.connect({ onSuccess: onConnect });
             }
