@@ -33,7 +33,7 @@
             var host = document.getElementById("host").value;
             var port = document.getElementById("port").value;
             // Connect to MQTT broker
-            var websocketUrl = "wss://" + host + ":" + port + "/mqtt";
+            var websocketUrl = "wss://" + host + ":" + port ;
             // Connect to MQTT broker
             client = new Paho.MQTT.Client(websocketUrl, "clientId");
             client.onConnectionLost = onConnectionLost;
